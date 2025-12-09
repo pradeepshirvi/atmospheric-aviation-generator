@@ -1,0 +1,41 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Environment files
+.env
+.env.*
+
+# Node modules
+node_modules
+npm-debug.log*
+.npm
+
+# Build outputs
+dist/
+build/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Coverage
+coverage/
+
+# Cache
+.cache
+.parcel-cache

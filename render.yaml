@@ -1,0 +1,25 @@
+services:
+  # Flask API Backend
+  - type: web
+    name: atmospheric-api
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python flask_api.py"
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: False
+      - key: PORT
+        value: 10000
+
+  # React Frontend (Static Site)
+  - type: web
+    name: atmospheric-frontend
+    env: static
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

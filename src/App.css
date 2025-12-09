@@ -1,0 +1,11 @@
+.App {
+  text-align: center;
+  min-height: 100vh;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}

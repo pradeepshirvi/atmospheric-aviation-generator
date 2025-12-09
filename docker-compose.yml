@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # Flask API Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: atmospheric-api
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - FLASK_DEBUG=False
+      - PORT=5000
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:80
+    volumes:
+      - ./output:/app/output
+    restart: unless-stopped
+    networks:
+      - atmospheric-network
+
+  # React Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: atmospheric-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_URL=http://localhost:5000
+    restart: unless-stopped
+    networks:
+      - atmospheric-network
+
+networks:
+  atmospheric-network:
+    driver: bridge
+
+volumes:
+  atmospheric-data:
