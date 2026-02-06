@@ -8,7 +8,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [statistics, setStatistics] = useState(null);
   const [validationResult, setValidationResult] = useState(null);
-  
+
   // Form parameters
   const [parameters, setParameters] = useState({
     // Radiosonde parameters
@@ -67,11 +67,11 @@ const Dashboard = () => {
   const generateData = async () => {
     setLoading(true);
     setValidationResult(null);
-    
+
     // Simulate API call
     setTimeout(() => {
       let data = [];
-      
+
       if (activeTab === 'radiosonde') {
         // Generate radiosonde data
         const altitudes = [];
@@ -79,7 +79,7 @@ const Dashboard = () => {
           const alt = parameters.min_altitude + (parameters.max_altitude - parameters.min_altitude) * i / parameters.num_points;
           altitudes.push(alt);
         }
-        
+
         data = altitudes.map((alt, i) => ({
           index: i,
           altitude_m: Math.round(alt),
@@ -95,10 +95,10 @@ const Dashboard = () => {
         const climbPoints = Math.floor(numPoints * 0.2);
         const descentPoints = Math.floor(numPoints * 0.2);
         const cruisePoints = numPoints - climbPoints - descentPoints;
-        
+
         for (let i = 0; i < numPoints; i++) {
           let altitude, airspeed, thrust;
-          
+
           if (i < climbPoints) {
             altitude = (parameters.cruise_altitude * i) / climbPoints;
             airspeed = (parameters.cruise_speed * i) / climbPoints;
@@ -113,7 +113,7 @@ const Dashboard = () => {
             airspeed = parameters.cruise_speed * (1 - descentIndex / descentPoints);
             thrust = 65 - (35 * descentIndex) / descentPoints;
           }
-          
+
           data.push({
             index: i,
             time_min: i * 0.5,
@@ -125,7 +125,7 @@ const Dashboard = () => {
           });
         }
       }
-      
+
       setGeneratedData(data);
       calculateStatistics(data);
       validateData(data);
@@ -135,10 +135,10 @@ const Dashboard = () => {
 
   const calculateStatistics = (data) => {
     if (!data || data.length === 0) return;
-    
+
     const stats = {};
     const numericKeys = Object.keys(data[0]).filter(key => typeof data[0][key] === 'number' && key !== 'index');
-    
+
     numericKeys.forEach(key => {
       const values = data.map(d => d[key]);
       stats[key] = {
@@ -148,36 +148,36 @@ const Dashboard = () => {
         median: values.sort((a, b) => a - b)[Math.floor(values.length / 2)]
       };
     });
-    
+
     setStatistics(stats);
   };
 
   const validateData = (data) => {
     const issues = [];
     const warnings = [];
-    
+
     if (activeTab === 'radiosonde' && data.length > 1) {
       // Check temperature decrease with altitude
-      const tempGradient = (data[data.length - 1].temperature_c - data[0].temperature_c) / 
-                          (data[data.length - 1].altitude_m - data[0].altitude_m);
+      const tempGradient = (data[data.length - 1].temperature_c - data[0].temperature_c) /
+        (data[data.length - 1].altitude_m - data[0].altitude_m);
       if (tempGradient > 0) {
         issues.push('Temperature increases with altitude');
       }
-      
+
       // Check pressure decrease
-      const pressureGradient = (data[data.length - 1].pressure_hpa - data[0].pressure_hpa) / 
-                               (data[data.length - 1].altitude_m - data[0].altitude_m);
+      const pressureGradient = (data[data.length - 1].pressure_hpa - data[0].pressure_hpa) /
+        (data[data.length - 1].altitude_m - data[0].altitude_m);
       if (pressureGradient > 0) {
         issues.push('Pressure increases with altitude');
       }
-      
+
       // Check for extreme wind speeds
       const maxWind = Math.max(...data.map(d => d.wind_speed_mps));
       if (maxWind > 150) {
         warnings.push('Very high wind speeds detected (>150 m/s)');
       }
     }
-    
+
     setValidationResult({
       valid: issues.length === 0,
       issues,
@@ -187,12 +187,12 @@ const Dashboard = () => {
 
   const downloadData = (format) => {
     if (!generatedData) return;
-    
+
     if (format === 'csv') {
       const headers = Object.keys(generatedData[0]).join(',');
       const rows = generatedData.map(row => Object.values(row).join(','));
       const csv = [headers, ...rows].join('\n');
-      
+
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -212,7 +212,7 @@ const Dashboard = () => {
 
   const getChartData = () => {
     if (!generatedData) return [];
-    
+
     if (activeTab === 'radiosonde') {
       return generatedData.slice(0, 50); // Limit for performance
     } else {
@@ -235,22 +235,20 @@ const Dashboard = () => {
         <div className="flex gap-4 mb-6">
           <button
             onClick={() => setActiveTab('radiosonde')}
-            className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 ${
-              activeTab === 'radiosonde' 
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' 
+            className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 ${activeTab === 'radiosonde'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
                 : 'bg-white/10 text-blue-200 hover:bg-white/20'
-            }`}
+              }`}
           >
             <Cloud size={20} />
             Radiosonde Data
           </button>
           <button
             onClick={() => setActiveTab('aviation')}
-            className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 ${
-              activeTab === 'aviation' 
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' 
+            className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 ${activeTab === 'aviation'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
                 : 'bg-white/10 text-blue-200 hover:bg-white/20'
-            }`}
+              }`}
           >
             <Plane size={20} />
             Aviation Data
@@ -265,11 +263,11 @@ const Dashboard = () => {
                 <Settings size={20} />
                 Parameters
               </h2>
-              
+
               {/* Presets */}
               <div className="mb-6">
                 <label className="text-sm text-blue-200 block mb-2">Weather Preset</label>
-                <select 
+                <select
                   className="w-full p-2 rounded-lg bg-white/10 text-white border border-white/20"
                   onChange={(e) => e.target.value && applyPreset('weather', e.target.value)}
                 >
@@ -344,7 +342,7 @@ const Dashboard = () => {
                 <>
                   <div className="mb-6">
                     <label className="text-sm text-blue-200 block mb-2">Flight Preset</label>
-                    <select 
+                    <select
                       className="w-full p-2 rounded-lg bg-white/10 text-white border border-white/20"
                       onChange={(e) => e.target.value && applyPreset('flight', e.target.value)}
                     >
@@ -462,22 +460,22 @@ const Dashboard = () => {
           {/* Main Content Area */}
           <div className="lg:col-span-2 space-y-6">
             {/* Visualization */}
-            {generatedData && (
-              <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
-                <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                  <Activity size={20} />
-                  Data Visualization
-                </h2>
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <Activity size={20} />
+                Data Visualization
+              </h2>
+              {generatedData ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={getChartData()}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                    <XAxis 
-                      dataKey={activeTab === 'radiosonde' ? 'altitude_m' : 'time_min'} 
+                    <XAxis
+                      dataKey={activeTab === 'radiosonde' ? 'altitude_m' : 'time_min'}
                       stroke="rgba(255,255,255,0.5)"
-                      label={{ value: activeTab === 'radiosonde' ? 'Altitude (m)' : 'Time (min)', style: { fill: 'rgba(255,255,255,0.5)' }}}
+                      label={{ value: activeTab === 'radiosonde' ? 'Altitude (m)' : 'Time (min)', style: { fill: 'rgba(255,255,255,0.5)' } }}
                     />
                     <YAxis stroke="rgba(255,255,255,0.5)" />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.2)' }}
                       labelStyle={{ color: 'white' }}
                     />
@@ -496,13 +494,21 @@ const Dashboard = () => {
                     )}
                   </LineChart>
                 </ResponsiveContainer>
-              </div>
-            )}
+              ) : (
+                <div className="h-[300px] flex items-center justify-center border-2 border-dashed border-white/20 rounded-lg">
+                  <div className="text-center">
+                    <Activity size={48} className="mx-auto mb-3 text-blue-300 opacity-50" />
+                    <p className="text-blue-200 text-lg">No data to visualize</p>
+                    <p className="text-blue-300 text-sm mt-1">Generate data to see charts here</p>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Statistics */}
-            {statistics && (
-              <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
-                <h2 className="text-xl font-bold text-white mb-4">Dataset Statistics</h2>
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+              <h2 className="text-xl font-bold text-white mb-4">Dataset Statistics</h2>
+              {statistics ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {Object.entries(statistics).slice(0, 6).map(([key, stats]) => (
                     <div key={key} className="bg-white/5 rounded-lg p-3">
@@ -516,13 +522,23 @@ const Dashboard = () => {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {['Altitude', 'Temperature', 'Pressure', 'Humidity', 'Wind Speed', 'Wind Direction'].map((label) => (
+                    <div key={label} className="bg-white/5 rounded-lg p-3 border-2 border-dashed border-white/10">
+                      <div className="text-sm text-blue-200 mb-1">{label}</div>
+                      <div className="text-white font-semibold text-2xl">--</div>
+                      <div className="text-xs text-blue-300">No data</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Data Preview */}
-            {generatedData && (
-              <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
-                <h2 className="text-xl font-bold text-white mb-4">Data Preview (First 10 Records)</h2>
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+              <h2 className="text-xl font-bold text-white mb-4">Data Preview (First 10 Records)</h2>
+              {generatedData ? (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -547,8 +563,16 @@ const Dashboard = () => {
                     </tbody>
                   </table>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="border-2 border-dashed border-white/20 rounded-lg p-8">
+                  <div className="text-center">
+                    <Database size={48} className="mx-auto mb-3 text-blue-300 opacity-50" />
+                    <p className="text-blue-200 text-lg">No data available</p>
+                    <p className="text-blue-300 text-sm mt-1">Click "Generate Data" to create synthetic dataset</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

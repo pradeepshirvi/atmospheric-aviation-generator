@@ -14,3 +14,17 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* Fix dropdown option visibility */
+select option {
+  background-color: #1e293b;
+  color: #ffffff;
+  padding: 8px;
+}
+
+select option:hover,
+select option:focus,
+select option:checked {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
