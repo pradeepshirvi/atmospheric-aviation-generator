@@ -161,7 +161,7 @@ generator = QuickDataGenerator()
 # API Routes
 # =============================================================================
 
-@app.route('/', methods=['GET'])
+@app.route('/api', methods=['GET'])
 def home():
     """API documentation endpoint"""
     return jsonify({
