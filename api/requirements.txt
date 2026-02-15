@@ -14,7 +14,7 @@ numpy
 # scipy removed to reduce slug size
 
 # Data visualization
-matplotlib
+# matplotlib removed to reduce slug size < 250MB
 
 # Date and time handling
 python-dateutil
@@ -23,4 +23,3 @@ python-dateutil
 typing-extensions
 
 # Utilities
-psutil
