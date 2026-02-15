@@ -6,12 +6,12 @@ flask-cors
 pandas
 numpy
 
-# Machine learning and deep learning
-tensorflow
+# Machine learning
 scikit-learn
+# tensorflow removed to reduce slug size
 
 # Scientific computing
-scipy
+# scipy removed to reduce slug size
 
 # Data visualization
 matplotlib
@@ -19,16 +19,8 @@ matplotlib
 # Date and time handling
 python-dateutil
 
-# JSON handling (built-in, but included for completeness)
-# json - built-in module
-
-# Type hinting support (Python 3.5+)
+# Type hinting
 typing-extensions
 
-# File I/O operations
-# io - built-in module
-# zipfile - built-in module
-# pickle - built-in module
-
-# Additional utilities that might be useful
-requests
+# Utilities
+psutil
