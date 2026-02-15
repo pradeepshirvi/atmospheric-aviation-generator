@@ -7,7 +7,7 @@ pandas
 numpy
 
 # Machine learning
-scikit-learn
+# scikit-learn removed to reduce slug size < 250MB
 # tensorflow removed to reduce slug size
 
 # Scientific computing
