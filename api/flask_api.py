@@ -14,6 +14,8 @@ from typing import Dict, Optional
 
 # Import the generator module (save previous code as synthetic_generator.py)
 # For this example, I'll include the essential classes inline
+import os
+os.environ['MPLCONFIGDIR'] = '/tmp'
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
