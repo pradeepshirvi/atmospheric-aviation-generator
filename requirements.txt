@@ -1,0 +1,26 @@
+# Core web framework and API dependencies
+flask
+flask-cors
+
+# Data manipulation and analysis
+pandas
+numpy
+
+# Machine learning
+# scikit-learn removed to reduce slug size < 250MB
+# tensorflow removed to reduce slug size
+
+# Scientific computing
+# scipy removed to reduce slug size
+
+# Data visualization
+matplotlib
+
+# Date and time handling
+python-dateutil
+
+# Type hinting
+typing-extensions
+
+# Utilities
+psutil
