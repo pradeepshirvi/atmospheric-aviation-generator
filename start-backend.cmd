@@ -1,25 +1,20 @@
 @echo off
 cd /d "%~dp0"
 
-if not exist "backend\.venv" (
+set "VENV_DIR=.venv"
+
+if not exist "%VENV_DIR%" (
     echo Creating virtual environment...
-    cd backend
-    python -m venv .venv
-    cd ..
-)
-
-if exist "backend\.venv\Scripts\activate.bat" (
-    call backend\.venv\Scripts\activate.bat
+    python -m venv "%VENV_DIR%"
+    call "%VENV_DIR%\Scripts\activate.bat"
+    echo Installing dependencies...
+    pip install -r requirements.txt
 ) else (
-    echo Virtual environment activation script not found.
-    pause
-    exit /b 1
+    call "%VENV_DIR%\Scripts\activate.bat"
+    echo Dependencies are already installed in %VENV_DIR%.
 )
-
-echo Installing dependencies...
-cd backend
-pip install -r requirements.txt
 
 echo 🚀 Starting Flask Backend on http://localhost:5000
-python flask_api.py
+set "PYTHONPATH=%cd%"
+python backend\flask_api.py
 pause

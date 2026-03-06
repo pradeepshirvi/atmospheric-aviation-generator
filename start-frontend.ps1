@@ -1,5 +1,5 @@
 ﻿$ErrorActionPreference = "Stop"
-Set-Location -Path $PSScriptRoot
+Set-Location -Path "$PSScriptRoot\frontend"
 
 if (-not (Test-Path "node_modules")) {
     Write-Host "Installing node modules..." -ForegroundColor Yellow

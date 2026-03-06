@@ -13,6 +13,7 @@ const Dashboard = () => {
   const [systemStatus, setSystemStatus] = useState<any>(null);
   const [imageType, setImageType] = useState('satellite');
   const [trainingMetrics, setTrainingMetrics] = useState<any>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   // Form parameters
   const [parameters, setParameters] = useState({
@@ -139,70 +140,68 @@ const Dashboard = () => {
   const generateData = async () => {
     setLoading(true);
     setValidationResult(null);
+    setApiError(null);
 
-    // Simulate API call
-    setTimeout(() => {
-      let data = [];
+    try {
+      let endpoint = '';
+      let body: Record<string, any> = {};
 
       if (activeTab === 'radiosonde') {
-        // Generate radiosonde data
-        const altitudes = [];
-        for (let i = 0; i <= parameters.num_points; i++) {
-          const alt = parameters.min_altitude + (parameters.max_altitude - parameters.min_altitude) * i / parameters.num_points;
-          altitudes.push(alt);
-        }
-
-        data = altitudes.map((alt, i) => ({
-          index: i,
-          altitude_m: Math.round(alt),
-          temperature_c: parseFloat((parameters.surface_temp - 6.5 * alt / 1000 + (Math.random() - 0.5)).toFixed(2)),
-          pressure_hpa: parseFloat((parameters.surface_pressure * Math.pow(1 - 0.0065 * alt / 288.15, 5.255)).toFixed(2)),
-          humidity_percent: parseFloat(Math.max(5, Math.min(100, parameters.surface_humidity * Math.exp(-alt / 8000) + (Math.random() - 0.5) * 10)).toFixed(2)),
-          wind_speed_mps: parseFloat((5 + alt / 1000 * 2 + (Math.random() - 0.5) * 4).toFixed(2)),
-          wind_direction_deg: Math.round(270 + (Math.random() - 0.5) * 60)
-        }));
+        endpoint = '/api/generate/radiosonde';
+        body = {
+          min_altitude: parameters.min_altitude,
+          max_altitude: parameters.max_altitude,
+          num_points: parameters.num_points,
+          surface_temp: parameters.surface_temp,
+          surface_pressure: parameters.surface_pressure,
+          surface_humidity: parameters.surface_humidity,
+        };
       } else if (activeTab === 'aviation') {
-        // Generate aviation data
-        const numPoints = parameters.duration_minutes * 2; // Every 30 seconds
-        const climbPoints = Math.floor(numPoints * 0.2);
-        const descentPoints = Math.floor(numPoints * 0.2);
-        const cruisePoints = numPoints - climbPoints - descentPoints;
-
-        for (let i = 0; i < numPoints; i++) {
-          let altitude, airspeed, thrust;
-
-          if (i < climbPoints) {
-            altitude = (parameters.cruise_altitude * i) / climbPoints;
-            airspeed = (parameters.cruise_speed * i) / climbPoints;
-            thrust = 100 - (25 * i) / climbPoints;
-          } else if (i < climbPoints + cruisePoints) {
-            altitude = parameters.cruise_altitude;
-            airspeed = parameters.cruise_speed + (Math.random() - 0.5) * 10;
-            thrust = 65 + (Math.random() - 0.5) * 10;
-          } else {
-            const descentIndex = i - climbPoints - cruisePoints;
-            altitude = parameters.cruise_altitude * (1 - descentIndex / descentPoints);
-            airspeed = parameters.cruise_speed * (1 - descentIndex / descentPoints);
-            thrust = 65 - (35 * descentIndex) / descentPoints;
-          }
-
-          data.push({
-            index: i,
-            time_min: i * 0.5,
-            altitude_m: Math.round(altitude),
-            airspeed_mps: Math.round(airspeed),
-            thrust_percent: Math.round(thrust),
-            fuel_flow_kg_hr: Math.round(thrust * 50 + (Math.random() - 0.5) * 100),
-            ambient_temp_c: parseFloat((15 - 6.5 * altitude / 1000).toFixed(2))
-          });
-        }
+        endpoint = '/api/generate/aviation';
+        body = {
+          duration_minutes: parameters.duration_minutes,
+          cruise_altitude: parameters.cruise_altitude,
+          cruise_speed: parameters.cruise_speed,
+        };
       }
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Backend returned ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Unknown backend error');
+      }
+
+      // Map data: add index and time_min (for aviation charts)
+      const data = result.data.map((row: any, i: number) => ({
+        ...row,
+        index: i,
+        ...(activeTab === 'aviation' ? { time_min: parseFloat((i * 0.5).toFixed(1)) } : {}),
+      }));
 
       setGeneratedData(data);
       calculateStatistics(data);
       validateData(data);
+    } catch (err: any) {
+      const msg = err?.message || String(err);
+      setApiError(
+        msg.includes('Failed to fetch') || msg.includes('NetworkError')
+          ? '⚠️ Cannot reach the backend. Make sure the Flask server is running on http://localhost:5000'
+          : `⚠️ Error: ${msg}`
+      );
+      setGeneratedData(null);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const calculateStatistics = (data) => {
@@ -587,6 +586,14 @@ const Dashboard = () => {
                       </button>
                     </div>
                   )}
+
+                  {/* Backend source badge */}
+                  {generatedData && !apiError && (
+                    <div className="mt-3 flex items-center gap-2 text-xs text-green-300">
+                      <CheckCircle size={14} />
+                      <span>Data generated by Python backend model</span>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -606,7 +613,16 @@ const Dashboard = () => {
           {/* Main Content Area */}
           <div className="lg:col-span-2 space-y-6">
 
-
+            {/* Backend Error Banner */}
+            {apiError && (activeTab === 'radiosonde' || activeTab === 'aviation') && (
+              <div className="bg-red-500/20 border border-red-500/50 backdrop-blur-lg rounded-xl p-4 flex items-start gap-3">
+                <AlertCircle className="text-red-400 mt-0.5 shrink-0" size={20} />
+                <div>
+                  <div className="text-red-300 font-semibold text-sm">Backend Error</div>
+                  <div className="text-red-200 text-sm mt-1">{apiError}</div>
+                </div>
+              </div>
+            )}
 
             {/* Training Comparison View */}
             {activeTab === 'training' && trainingMetrics && (

@@ -79,6 +79,11 @@ coverage.xml
 output/
 *.csv
 *.json
+!**/package.json
+!**/package-lock.json
+!**/tsconfig.json
+!**/vercel.json
+!**/*.config.json
 *.png
 *.jpg
 *.jpeg
