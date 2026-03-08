@@ -1,6 +1,11 @@
+/// <reference types="vite/client" />
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { Download, Cloud, Plane, Activity, Settings, Database, CheckCircle, AlertCircle, Image, BarChart2, Cpu } from 'lucide-react';
+
+// In local dev: empty string → Vite proxy forwards /api → localhost:5000
+// In production: set VITE_API_BASE_URL=https://your-backend.onrender.com on Vercel
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('radiosonde');
@@ -35,7 +40,7 @@ const Dashboard = () => {
   const [selectedPreset, setSelectedPreset] = useState('');
 
   // Weather presets
-  const weatherPresets = {
+  const weatherPresets: Record<string, Record<string, number>> = {
     clear: { surface_temp: 20, surface_pressure: 1013.25, surface_humidity: 40 },
     stormy: { surface_temp: 10, surface_pressure: 990, surface_humidity: 85 },
     winter: { surface_temp: -5, surface_pressure: 1020, surface_humidity: 60 },
@@ -43,20 +48,20 @@ const Dashboard = () => {
   };
 
   // Flight presets
-  const flightPresets = {
+  const flightPresets: Record<string, Record<string, number>> = {
     short_haul: { duration_minutes: 90, cruise_altitude: 8000, cruise_speed: 220 },
     medium_haul: { duration_minutes: 180, cruise_altitude: 10000, cruise_speed: 250 },
     long_haul: { duration_minutes: 360, cruise_altitude: 12000, cruise_speed: 280 }
   };
 
-  const handleParameterChange = (key, value) => {
+  const handleParameterChange = (key: string, value: any) => {
     setParameters(prev => ({
       ...prev,
       [key]: parseFloat(value) || value
     }));
   };
 
-  const applyPreset = (type, preset) => {
+  const applyPreset = (type: string, preset: string) => {
     if (type === 'weather') {
       setParameters(prev => ({
         ...prev,
@@ -73,7 +78,7 @@ const Dashboard = () => {
   const generateImage = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/generate/image', {
+      const response = await fetch(`${API_BASE}/api/generate/image`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: imageType })
@@ -91,7 +96,7 @@ const Dashboard = () => {
   const evaluateModel = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/evaluate', { method: 'POST' });
+      const response = await fetch(`${API_BASE}/api/evaluate`, { method: 'POST' });
       const data = await response.json();
       if (data.success) {
         setEvaluationMetrics(data);
@@ -105,7 +110,7 @@ const Dashboard = () => {
   const evaluateTraining = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/evaluate/training', { method: 'POST' });
+      const response = await fetch(`${API_BASE}/api/evaluate/training`, { method: 'POST' });
       const data = await response.json();
       if (data.success) {
         setTrainingMetrics(data);
@@ -118,7 +123,7 @@ const Dashboard = () => {
 
   const checkSystemStatus = async () => {
     try {
-      const response = await fetch('/api/status');
+      const response = await fetch(`${API_BASE}/api/status`);
       const data = await response.json();
       if (data.success) {
         setSystemStatus(data);
@@ -147,7 +152,7 @@ const Dashboard = () => {
       let body: Record<string, any> = {};
 
       if (activeTab === 'radiosonde') {
-        endpoint = '/api/generate/radiosonde';
+        endpoint = `${API_BASE}/api/generate/radiosonde`;
         body = {
           min_altitude: parameters.min_altitude,
           max_altitude: parameters.max_altitude,
@@ -157,7 +162,7 @@ const Dashboard = () => {
           surface_humidity: parameters.surface_humidity,
         };
       } else if (activeTab === 'aviation') {
-        endpoint = '/api/generate/aviation';
+        endpoint = `${API_BASE}/api/generate/aviation`;
         body = {
           duration_minutes: parameters.duration_minutes,
           cruise_altitude: parameters.cruise_altitude,
@@ -224,8 +229,8 @@ const Dashboard = () => {
   };
 
   const validateData = (data) => {
-    const issues = [];
-    const warnings = [];
+    const issues: string[] = [];
+    const warnings: string[] = [];
 
     if (activeTab === 'radiosonde' && data.length > 1) {
       // Check temperature decrease with altitude
@@ -287,7 +292,7 @@ const Dashboard = () => {
     if (activeTab === 'radiosonde') {
       return generatedData.slice(0, 50); // Limit for performance
     } else {
-      return generatedData.filter((_, i) => i % 4 === 0); // Sample every 2 minutes
+      return generatedData.filter((_: any, i: number) => i % 4 === 0); // Sample every 2 minutes
     }
   };
 

@@ -31,7 +31,13 @@ except ImportError:
     psutil = None
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend communication
+
+# CORS: allow local dev + production Vercel frontend
+# Set CORS_ORIGINS env var on Render to your Vercel URL, e.g.:
+# CORS_ORIGINS=https://your-app.vercel.app,http://localhost:3000
+_cors_origins = os.environ.get('CORS_ORIGINS', '*')
+cors_origins = [o.strip() for o in _cors_origins.split(',')] if _cors_origins != '*' else '*'
+CORS(app, origins=cors_origins, supports_credentials=True)
 
 # =============================================================================
 # Core Models
