@@ -1,9 +1,27 @@
+# Core web framework
 flask
 flask-cors
+gunicorn
+
+# Data manipulation
 pandas
 numpy
+
+# Machine learning (required for GAN/VAE inference)
+tensorflow
+scikit-learn
+
+# Scientific computing
+scipy
+
+# Data visualization
 matplotlib
+
+# Date/time handling
 python-dateutil
+
+# Type hinting
 typing-extensions
+
+# System monitoring
 psutil
-gunicorn

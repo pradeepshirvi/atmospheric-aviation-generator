@@ -93,3 +93,6 @@ output/
 *.pkl
 *.h5
 *.model
+# BUT allow trained models in the deployment directory
+!backend/trained_models/*.h5
+!backend/trained_models/*.pkl

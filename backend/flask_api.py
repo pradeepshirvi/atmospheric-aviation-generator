@@ -570,6 +570,110 @@ def evaluate_training():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
 
+# =============================================================================
+# ML Model Routes (GAN / VAE)
+# =============================================================================
+
+# Import model manager (lazy load to avoid startup crash if TensorFlow not installed)
+try:
+    from model_inference import model_manager
+    ML_AVAILABLE = True
+except ImportError as e:
+    ML_AVAILABLE = False
+    print(f"[Warning] ML models not available: {e}")
+
+@app.route('/api/models/status', methods=['GET'])
+def models_status():
+    """Check which ML models are loaded and available"""
+    if not ML_AVAILABLE:
+        return jsonify({
+            'success': True,
+            'ml_available': False,
+            'message': 'TensorFlow/scikit-learn not installed. Install them and train models using the Colab notebook.',
+            'gan_loaded': False,
+            'vae_loaded': False
+        })
+
+    status = model_manager.get_status()
+    return jsonify({
+        'success': True,
+        'ml_available': True,
+        **status
+    })
+
+@app.route('/api/generate/gan', methods=['POST'])
+def generate_gan_data():
+    """Generate atmospheric data using the pre-trained GAN model"""
+    if not ML_AVAILABLE:
+        return jsonify({
+            'success': False,
+            'error': 'ML libraries not installed. Please install TensorFlow and scikit-learn.'
+        }), 400
+
+    try:
+        params = request.json or {}
+        n_samples = params.get('num_points', 100)
+        apply_physics = params.get('apply_physics', True)
+
+        df, metadata = model_manager.generate_gan(
+            n_samples=n_samples,
+            apply_physics=apply_physics
+        )
+
+        return jsonify({
+            'success': True,
+            'data': df.to_dict(orient='records'),
+            'metadata': {
+                **metadata,
+                'num_records': len(df),
+                'generation_time': datetime.now().isoformat()
+            }
+        })
+    except RuntimeError as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'hint': 'Train the GAN model using the provided Colab notebook, then upload the model files to backend/trained_models/'
+        }), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/generate/vae', methods=['POST'])
+def generate_vae_data():
+    """Generate time-series atmospheric data using the pre-trained VAE model"""
+    if not ML_AVAILABLE:
+        return jsonify({
+            'success': False,
+            'error': 'ML libraries not installed. Please install TensorFlow and scikit-learn.'
+        }), 400
+
+    try:
+        params = request.json or {}
+        n_sequences = params.get('num_sequences', 5)
+        apply_physics = params.get('apply_physics', True)
+
+        df, metadata = model_manager.generate_vae(
+            n_sequences=n_sequences,
+            apply_physics=apply_physics
+        )
+
+        return jsonify({
+            'success': True,
+            'data': df.to_dict(orient='records'),
+            'metadata': {
+                **metadata,
+                'generation_time': datetime.now().isoformat()
+            }
+        })
+    except RuntimeError as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'hint': 'Train the VAE model using the provided Colab notebook, then upload the model files to backend/trained_models/'
+        }), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
 
 if __name__ == '__main__':
     print("Starting Synthetic Atmospheric & Aviation Dataset Generator API...")
@@ -577,3 +681,4 @@ if __name__ == '__main__':
     debug_mode = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'
     print(f"Server running on http://localhost:{port}")
     app.run(debug=debug_mode, host='0.0.0.0', port=port)
+
