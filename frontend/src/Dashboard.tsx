@@ -19,6 +19,7 @@ const Dashboard = () => {
   const [imageType, setImageType] = useState('satellite');
   const [trainingMetrics, setTrainingMetrics] = useState<any>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [generationMethod, setGenerationMethod] = useState<'physics' | 'gan' | 'vae'>('physics');
 
   // Form parameters
   const [parameters, setParameters] = useState({
@@ -151,23 +152,28 @@ const Dashboard = () => {
       let endpoint = '';
       let body: Record<string, any> = {};
 
-      if (activeTab === 'radiosonde') {
-        endpoint = `${API_BASE}/api/generate/radiosonde`;
-        body = {
-          min_altitude: parameters.min_altitude,
-          max_altitude: parameters.max_altitude,
-          num_points: parameters.num_points,
-          surface_temp: parameters.surface_temp,
-          surface_pressure: parameters.surface_pressure,
-          surface_humidity: parameters.surface_humidity,
-        };
-      } else if (activeTab === 'aviation') {
-        endpoint = `${API_BASE}/api/generate/aviation`;
-        body = {
-          duration_minutes: parameters.duration_minutes,
-          cruise_altitude: parameters.cruise_altitude,
-          cruise_speed: parameters.cruise_speed,
-        };
+      if (activeTab === 'radiosonde' || activeTab === 'aviation') {
+        if (generationMethod === 'physics') {
+          endpoint = `${API_BASE}/api/generate/${activeTab}`;
+          body = activeTab === 'radiosonde' ? {
+            min_altitude: parameters.min_altitude,
+            max_altitude: parameters.max_altitude,
+            num_points: parameters.num_points,
+            surface_temp: parameters.surface_temp,
+            surface_pressure: parameters.surface_pressure,
+            surface_humidity: parameters.surface_humidity,
+          } : {
+            duration_minutes: parameters.duration_minutes,
+            cruise_altitude: parameters.cruise_altitude,
+            cruise_speed: parameters.cruise_speed,
+          };
+        } else if (generationMethod === 'gan') {
+          endpoint = `${API_BASE}/api/generate/gan`;
+          body = { num_points: parameters.num_points, apply_physics: true };
+        } else if (generationMethod === 'vae') {
+          endpoint = `${API_BASE}/api/generate/vae`;
+          body = { num_sequences: parameters.num_profiles || 5, apply_physics: true };
+        }
       }
 
       const response = await fetch(endpoint, {
@@ -453,6 +459,30 @@ const Dashboard = () => {
               {/* Standard Data Generation Controls */}
               {(activeTab === 'radiosonde' || activeTab === 'aviation') && (
                 <>
+                  <div className="mb-4">
+                    <label className="text-sm text-blue-200 block mb-2">Generation Method</label>
+                    <div className="bg-indigo-900/40 rounded-lg p-1 flex shadow-inner">
+                      <button 
+                        onClick={() => setGenerationMethod('physics')}
+                        className={`flex-1 py-1.5 px-2 rounded-md text-xs font-medium transition-all ${generationMethod === 'physics' ? 'bg-blue-600 text-white shadow-md' : 'text-blue-300 hover:text-white'}`}
+                      >
+                        Physics
+                      </button>
+                      <button 
+                        onClick={() => setGenerationMethod('gan')}
+                        className={`flex-1 py-1.5 px-2 rounded-md text-xs font-medium transition-all ${generationMethod === 'gan' ? 'bg-purple-600 text-white shadow-md' : 'text-blue-300 hover:text-white'}`}
+                      >
+                        GAN
+                      </button>
+                      <button 
+                        onClick={() => setGenerationMethod('vae')}
+                        className={`flex-1 py-1.5 px-2 rounded-md text-xs font-medium transition-all ${generationMethod === 'vae' ? 'bg-pink-600 text-white shadow-md' : 'text-blue-300 hover:text-white'}`}
+                      >
+                        VAE
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="mb-6">
                     <label className="text-sm text-blue-200 block mb-2">{activeTab === 'radiosonde' ? 'Weather Preset' : 'Flight Preset'}</label>
                     <select
